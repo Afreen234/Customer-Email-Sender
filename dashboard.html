@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Dashboard</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        
+        h1, h2 {
+            text-align: center;
+            color: #4CAF50;
+        }
+
+        .container {
+            width: 90%;
+            margin: 30px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats p {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .stats span {
+            color: #4CAF50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+            cursor: pointer;
+        }
+
+        .status-success {
+            color: #4CAF50;
+        }
+
+        .status-pending {
+            color: #FFC107;
+        }
+
+        .status-failed {
+            color: #F44336;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .stats {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 10px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Email Dashboard</h1>
+        
+        <div class="stats">
+            <p>Total Sent: <span id="sent-count">0</span></p>
+            <p>Total Pending: <span id="pending-count">0</span></p>
+            <p>Total Failed: <span id="failed-count">0</span></p>
+        </div>
+
+        <h2>Email Details</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Recipient</th>
+                    <th>Subject</th>
+                    <th>Status</th>
+                    <th>Delivery Status</th>
+                    <th>Opened</th>
+                </tr>
+            </thead>
+            <tbody id="email-details">
+                <!-- Dynamic email rows will be added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function fetchStats() {
+            const response = await fetch('/email-stats');
+            const data = await response.json();
+
+            // Update stats
+            document.getElementById('sent-count').textContent = data.stats.sent;
+            document.getElementById('pending-count').textContent = data.stats.pending;
+            document.getElementById('failed-count').textContent = data.stats.failed;
+
+            // Update email details table
+            const emailDetails = document.getElementById('email-details');
+            emailDetails.innerHTML = ''; // Clear existing rows
+            data.details.forEach(email => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${email.recipient}</td>
+                    <td>${email.subject}</td>
+                    <td class="${getStatusClass(email.status)}">${email.status}</td>
+                    <td>${email.delivery_status}</td>
+                    <td>${email.opened}</td>
+                `;
+                emailDetails.appendChild(row);
+            });
+        }
+
+        // Helper function to determine status class
+        function getStatusClass(status) {
+            if (status === "Sent") {
+                return "status-success";
+            } else if (status === "Pending") {
+                return "status-pending";
+            } else if (status === "Failed") {
+                return "status-failed";
+            }
+            return "";
+        }
+
+        // Fetch stats every 5 seconds
+        setInterval(fetchStats, 5000);
+        fetchStats();  // Initial load
+    </script>
+</body>
+</html>

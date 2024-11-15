@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f9fc;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s ease;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 30px;
+            font-size: 36px;
+            transition: color 0.3s ease;
+        }
+
+        h2 {
+            color: #744caf;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 16px;
+            display: block;
+        }
+
+        input[type="email"],
+        input[type="text"],
+        input[type="datetime-local"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+            transition: border 0.3s ease;
+        }
+
+        input[type="email"]:focus,
+        input[type="text"]:focus,
+        textarea:focus,
+        input[type="datetime-local"]:focus {
+            border: 1px solid #6d4caf;
+            outline: none;
+        }
+
+        textarea {
+            height: 100px;
+        }
+
+        button {
+            background-color: #7c4caf;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .file-upload {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+        }
+
+        .form-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .upload-btn-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .status-success {
+            background-color: #e7f4e4;
+            color: #4CAF50;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #d9534f;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            margin-top: 20px;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                background-color: #e9ecef;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            h2 {
+                font-size: 20px;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Email Dashboard</h1>
+    
+    <h2>Upload CSV File</h2>
+    <div class="file-upload">
+        <input type="file" id="csvFile" />
+        <button type="button" onclick="uploadCSV()">Upload</button>
+    </div>
+
+    <h2>Send Custom Email</h2>
+    <div class="form-container">
+        <form id="emailForm">
+            <label>Recipient Email:</label>
+            <input type="email" id="recipient" required><br/>
+            <label>Subject:</label>
+            <input type="text" id="subject" required><br/>
+            <label>Prompt:</label>
+            <textarea id="prompt" required></textarea><br/>
+            <label>Schedule:</label>
+            <input type="datetime-local" id="sendTime"><br/>
+            <button type="button" onclick="sendEmail()">Send</button>
+        </form>
+    </div>
+
+    <!-- Status Message Area -->
+    <div id="statusMessage" class="status-message"></div>
+
+    <script>
+        // Upload CSV function with interactive status message
+        async function uploadCSV() {
+            const file = document.getElementById("csvFile").files[0];
+            const statusMessage = document.getElementById("statusMessage");
+
+            if (!file) {
+                statusMessage.textContent = "Please select a file first.";
+                statusMessage.className = "status-message status-error";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            // Show loading spinner
+            statusMessage.innerHTML = "<div class='spinner'></div>";
+            statusMessage.className = "status-message";
+
+            try {
+                const response = await fetch("/upload/", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === "File uploaded successfully") {
+                    statusMessage.textContent = "File uploaded successfully!";
+                    statusMessage.className = "status-message status-success";
+                } else {
+                    statusMessage.textContent = "Error uploading file: " + result.status;
+                    statusMessage.className = "status-message status-error";
+                }
+            } catch (error) {
+                statusMessage.textContent = "There was an error uploading the file.";
+                statusMessage.className = "status-message status-error";
+            }
+        }
+
+        // Send Email function with interactive status message
+        async function sendEmail() {
+            const recipient = document.getElementById("recipient").value;
+            const subject = document.getElementById("subject").value;
+            const prompt = document.getElementById("prompt").value;
+            const sendTime = document.getElementById("sendTime").value;
+
+            const statusMessage = document.getElementById("statusMessage");
+
+            if (!recipient || !subject || !prompt) {
+                statusMessage.textContent = "Please fill in all required fields.";
+                statusMessage.className = "status-message status-error";
+                return;
+            }
+
+            const emailData = {
+                recipient,
+                subject,
+                prompt,
+                sendTime
+            };
+
+            // Show loading spinner
+            statusMessage.innerHTML = "<div class='spinner'></div>";
+            statusMessage.className = "status-message";
+
+            try {
+                const response = await fetch("/send-email", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(emailData)
+                });
+
+                const result = await response.json();
+
+                if (result.status === "Email sent successfully") {
+                    statusMessage.textContent = "Email sent successfully!";
+                    statusMessage.className = "status-message status-success";
+                } else {
+                    statusMessage.textContent = "Error sending email: " + result.status;
+                    statusMessage.className = "status-message status-error";
+                }
+            } catch (error) {
+                statusMessage.textContent = "There was an error sending the email.";
+                statusMessage.className = "status-message status-error";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+sendgrid
+apscheduler
+python-dotenv
+sqlite3
